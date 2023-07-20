@@ -153,5 +153,6 @@ FROM (
 
 SELECT * FROM dbo.state_percentage ORDER BY revenue DESC;
 
+/*...................... Question 7: Find the OrderID whose maximum Quantity among all product of that OrderID 
+															is greater than average quantity of all OrderID. ...................... */
 
- 
