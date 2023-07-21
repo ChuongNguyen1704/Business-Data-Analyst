@@ -205,7 +205,7 @@ SELECT
     c.Year,
     c.Month,
     ROUND(SUM(op.payment_value), 2) AS total_revenue,
-    CONCAT(FORMAT(ROUND(SUM(op.payment_value) * 100.0 / ts.total_sum, 2), 'N2'), '%') AS percentage
+    CONCAT(FORMAT(ROUND(SUM(op.payment_value) * 100.0 / ts.total_sum, 2), 'N2'), '%') AS Contribution
 FROM dbo.[order] AS o
 JOIN dbo.[order_payments] AS op ON o.order_id = op.order_id
 JOIN dbo.[Calendar] AS c ON c.CalendarDate = o.order_estimated_delivery_date
