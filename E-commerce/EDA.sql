@@ -104,71 +104,6 @@ ORDER BY payment_installments DESC;
     FROM dbo.order_items AS oi
     JOIN dbo.order_reviews ON order_reviews.order_id = oi.order_id
 
-/*...................... Question 6: The number of reviews by review category. ...................... */
--- View + CTEs + CASE WHEN + Independenly Nested Query
-CREATE VIEW review_score_percentage AS
-WITH total_review_score AS (
-    SELECT
-        (SELECT product_category_name
-         FROM dbo.products
-         WHERE product_id = oi.product_id) AS product_Name,
-        review_score,
-        CASE
-            WHEN oi.order_id IN (
-                SELECT order_id
-                FROM dbo.order_reviews
-                WHERE review_score >= 4
-            ) THEN 'Positive'
-            ELSE 'Negative'
-        END AS review_status
-    FROM dbo.order_items AS oi
-    JOIN dbo.order_reviews ON order_reviews.order_id = oi.order_id
-)
-SELECT
-    review_status,
-    COUNT(*) AS category_count,
-    CONCAT(FORMAT(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM total_review_score), 'N2'), '%') AS category_percentage
-FROM total_review_score
-GROUP BY review_status;
-
-
-/*...................... Question 7: The total number of the payment value of each payment type.   ...................... */
-
--- CTEs + CROSS JOIN
-CREATE VIEW payment_type AS
-WITH TotalSum AS (
-    SELECT ROUND(SUM(payment_value), 2) AS total_sum
-    FROM dbo.order_payments
-)
-SELECT
-    op.payment_type,
-	ROUND(SUM(op.payment_value), 2) AS total_value,
-    CONCAT(FORMAT(SUM(op.payment_value) * 100.0 / ts.total_sum, 'N2'), '%') AS percentage
-FROM dbo.order_payments AS op
-CROSS JOIN TotalSum AS ts 
-GROUP BY op.payment_type, ts.total_sum
-HAVING ROUND(SUM(op.payment_value), 2) > 0;
-
-
-/*......................		customers & order_payments & order		...................... */
-/*...................... Question 8: GMV Distribution by States. ...................... */
-
--- Views + Window Function
-CREATE VIEW dbo.state_percentage AS
-SELECT 
-    customerState,
-    revenue,
-    CONCAT(FORMAT(revenue * 100.0 / SUM(revenue) OVER (), 'N2'), '%') AS category_percentage
-FROM (
-    SELECT 
-        c.customer_state AS customerState,
-        SUM(op.payment_value) AS revenue
-    FROM dbo.customers AS c
-    JOIN dbo.[order] AS o ON o.customer_id = c.customer_id
-    JOIN dbo.order_payments AS op ON op.order_id = o.order_id
-    GROUP BY c.customer_state) AS subquery
-
-SELECT * FROM dbo.state_percentage ORDER BY revenue DESC;
 
 
 /*......................		Calendar & order		...................... */
@@ -176,7 +111,7 @@ SELECT * FROM dbo.state_percentage ORDER BY revenue DESC;
 SELECT 
     c.DayOfWeek,
     COUNT(o.[order_id]) AS NumberOfOrders,
-    CONCAT(FORMAT(COUNT(o.[order_id]) * 100.0 / SUM(COUNT(o.[order_id])) OVER (), 'N2'), '%') AS Percentage
+    CONCAT(FORMAT(COUNT(o.[order_id]) * 100.0 / SUM(COUNT(o.[order_id])) OVER (), 'N2'), '%') AS Contribution
 FROM 
     dbo.Calendar c
 LEFT JOIN 
@@ -187,7 +122,7 @@ GROUP BY
 HAVING 
     COUNT(o.[order_id]) > 2
 ORDER BY 
-  Percentage DESC;
+  Contribution DESC;
 
 
 /*......................		Calendar & order & order_payments		...................... */
@@ -218,7 +153,7 @@ ORDER BY c.Year, c.Month DESC;
 
 /*......................		Calendar & payments_value		...................... */
 /*.............. Question 11: All months by each year have more revenue than the average of all months by each year. .............. */
-
+-- Co-related nested query + CTEs 
 WITH MonthlyRevenue AS (
     SELECT 
         c.Year,
@@ -245,3 +180,4 @@ FROM MonthlyRevenue m
 JOIN AverageRevenueByYear a ON m.Year = a.Year
 WHERE m.total_revenue > a.avg_revenue
 ORDER BY m.Year, m.Month DESC;
+
