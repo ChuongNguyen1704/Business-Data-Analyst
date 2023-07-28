@@ -181,3 +181,35 @@ JOIN AverageRevenueByYear a ON m.Year = a.Year
 WHERE m.total_revenue > a.avg_revenue
 ORDER BY m.Year, m.Month DESC;
 
+
+
+/*.............. Number of order by time (Year and Month) .............. */
+
+
+WITH NumberOfOrderByTime AS (
+	SELECT 
+		YEAR(o.order_purchase_timestamp) AS Year_, 
+		MONTH(o.order_purchase_timestamp) AS Month_, 
+		COUNT(DISTINCT o.order_id) AS NumberOfOrder
+	FROM 
+		dbo.[order] AS o
+	INNER JOIN dbo.order_items AS oi ON o.order_id = oi.order_id
+	INNER JOIN dbo.customers AS c ON c.customer_id = o.customer_id
+	GROUP BY YEAR(o.order_purchase_timestamp), MONTH(o.order_purchase_timestamp)
+)
+
+-- Pivot the result by month and year
+SELECT
+	Year_,
+	[1] AS January, [2] AS February, [3] AS March,
+	[4] AS April, [5] AS May, [6] AS June,
+	[7] AS July, [8] AS August, [9] AS September,
+	[10] AS October, [11] AS November, [12] AS December
+FROM
+	NumberOfOrderByTime
+PIVOT
+(
+	SUM(NumberOfOrder)
+	FOR Month_ IN ([1], [2], [3], [4], [5], [6],
+					[7], [8], [9], [10], [11], [12])
+) AS PivotTable;

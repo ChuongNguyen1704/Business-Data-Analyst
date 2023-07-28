@@ -1,4 +1,13 @@
 
+
+CREATE VIEW productName AS
+	SELECT 
+		column1 AS ProductName,
+		column2 AS ProductName_Brasil
+	FROM dbo.product_category_name_translation  
+
+
+
 /*...................... Question 6: The number of reviews by review category. ...................... */
 -- View + CTEs + CASE WHEN + Independenly Nested Query
 CREATE VIEW review_score_percentage AS
